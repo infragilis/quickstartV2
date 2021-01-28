@@ -1,0 +1,73 @@
+#-----------------------------------------------------------------------------
+#Name        : createSVM.yaml
+#Email       : boonstra@netapp.com
+#Created     : 2021
+#Description : This playbook creates an SVM with NFS export for 0.0.0.0/24, CIFS is added but commented out
+#Dependencies: netapp-lib,netapp collections
+#Link        : n/a
+#Disclaimer  : THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
+#            : IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#            : WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+#            : PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+#            : ANYDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#            : DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+#            : GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#            : INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+#            : WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#            : NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#            : THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#-----------------------------------------------------------------------------
+- hosts: localhost
+  name: ONTAP
+  gather_facts: false
+  collections:
+    - netapp.ontap
+  vars_files:
+   ../vars.yaml
+  vars:
+    login: &login
+      hostname: "{{ src_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+  tasks:
+  - name: getting the Intercluster LIF IP for {{ src_cluster }}
+    na_ontap_command:
+      hostname: "{{ src_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['network interface show -service-policy default-intercluster  -fields address']
+      return_dict: true
+    register: src_interclusterlif
+  - name: return src_interclusterlif
+    debug:
+       msg : "{{ src_interclusterlif.msg.stdout_lines[2].split()[4] }}"
+  - name: getting the Intercluster LIF IP for {{ dst_cluster }}
+    na_ontap_command:
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['network interface show -service-policy default-intercluster  -fields address']
+      return_dict: true
+    register: dst_interclusterlif
+  - name: return dst_interclusterlif
+    debug:
+       msg : "{{ dst_interclusterlif.msg.stdout_lines[2].split()[4] }}"
+  - name: Create cluster peer
+    na_ontap_cluster_peer:
+      state: present
+      source_intercluster_lifs: "{{ src_interclusterlif.msg.stdout_lines[2].split()[4] }}"
+      dest_intercluster_lifs: "{{ dst_interclusterlif.msg.stdout_lines[2].split()[4] }}"
+      passphrase: "peeringpassphrase"
+      hostname: "{{ src_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      dest_hostname: "{{ dst_cluster }}"
+      https: true
+      validate_certs: false
+

@@ -1,0 +1,7 @@
+# simple playbook that call all playbooks to automate the SVM failover
+---
+- import_playbook: stop_src_SVM.yaml 
+- import_playbook: quiesce_SVMDR_mirror.yaml
+- import_playbook: break_SVMDR_mirror.yaml
+- import_playbook: start_SVMDR.yaml
+- import_playbook: reverse_resync.yaml

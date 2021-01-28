@@ -1,0 +1,65 @@
+---
+- hosts: localhost
+  gather_facts: false
+  collections:
+    - netapp.ontap
+  tasks:
+  - name: Create DR SVM
+    na_ontap_svm:
+      state: present
+      name: "{{ dst_svm }}"
+      subtype: "dp_destination"
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+
+  - name: Create vserver Peer
+    na_ontap_vserver_peer:
+      state: present
+      peer_vserver: "{{ src_svm }}"
+      peer_cluster: "{{ src_clustername }}"
+      dest_hostname: "{{ src_cluster }}"
+      vserver: "{{ dst_svm }}"
+      applications: snapmirror
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+
+
+  - name: Create vserver SnapMirror DR
+    na_ontap_snapmirror:
+      state: present
+      source_vserver: "{{ src_svm }}"
+      destination_vserver: "{{ dst_svm }}"
+      identity_preserve: "{{ identity_preserve }}"
+      schedule: "5min"
+      policy: "{{ policy }}"
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+
+  - name: waiting for svm-dr status {{ dst_cluster }} / {{ dst_svm }} to change to Snapmirrored
+    na_ontap_command:
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['snapmirror show -destination-path {{ dst_svm }}: -fields state']
+      return_dict: true
+    register: svmdrstatus
+    until: svmdrstatus.msg.stdout.find("Snapmirrored") != -1
+    retries: 12
+    delay: 30
+
+  - name: return svm-dr status
+    debug:
+       msg : "{{ svmdrstatus.msg.stdout_lines[2].split()[2] }}"
+
+

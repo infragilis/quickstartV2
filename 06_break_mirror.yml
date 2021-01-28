@@ -1,0 +1,57 @@
+- hosts: localhost
+  name: ONTAP
+  gather_facts: false
+  collections:
+   - netapp.ontap
+  tasks:  
+  - name: wait for svm-dr  {{ dst_cluster }} / {{ dst_svm }} to change to Snapmirrored
+    na_ontap_command:
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['snapmirror show -destination-path {{ dst_svm }}: -fields state']
+      return_dict: true
+    register: svmdrstatus
+    until: svmdrstatus.msg.stdout.find("Snapmirrored") != -1
+    retries: 12
+    delay: 30
+  - name: return svm-dr status
+    debug:
+       msg : "{{ svmdrstatus.msg.stdout_lines[2].split()[2] }}"
+
+  - name: Break svm-dr mirror for {{ dst_cluster }} / {{ dst_svm }} 
+    na_ontap_command:
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['snapmirror break -destination-path {{ dst_svm }}:']
+  - name: Break svm-dr mirror for {{ dst_cluster }} / {{ dst_svm }}
+    na_ontap_command:
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['snapmirror break -destination-path {{ dst_svm }}:']
+
+  - name: wait for svm-dr  {{ dst_cluster }} / {{ dst_svm }} to change to broken-off
+    na_ontap_command:
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['snapmirror show -destination-path {{ dst_svm }}: -fields state']
+      return_dict: true
+    register: svmbreakstatus
+    until: svmbreakstatus.msg.stdout.find("Broken-off") != -1
+    retries: 12
+    delay: 30
+  - name: return svm-dr status
+    debug:
+       msg : "{{ svmbreakstatus.msg.stdout_lines[2].split()[2] }}"
+

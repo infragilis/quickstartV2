@@ -1,0 +1,32 @@
+#generic stuff
+src_cluster: 192.168.0.81
+dst_cluster: 192.168.0.82
+netapp_username: admin
+netapp_password: netapp123
+src_svm: ansible_src
+domainname: lab.local
+nameserver: 192.168.1.1
+src_lifrole: data
+src_lifhomeport: e0c
+src_lifhomenode: kubOntap97-01
+src_lifprotocol: cifs,nfs
+src_lifaddress: 192.168.0.111
+src_lifnetmask: 255.255.255.0
+# AD create creds to add SVM to domain
+ad_username: admin
+ad_password: netapp123
+# vol add
+aggrname: kubOntap97_01_FC_1
+volname: ansible_vol
+volsize: 4
+# SVM DR bits
+dst_svm: ansible_dst
+dst_lifrole: data
+dst_lifhomeport: e0c
+dst_lifhomenode: node1
+dst_lifprotocol: cifs,nfs
+dst_lifaddress: 192.168.0.112
+dst_lifnetmask: 255.255.255.0
+identity_preserve:
+# SSL bits
+ontap_cert_root_common_name: netapp_self

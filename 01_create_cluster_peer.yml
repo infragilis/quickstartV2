@@ -1,0 +1,45 @@
+- hosts: localhost
+  name: ONTAP
+  gather_facts: false
+  collections:
+    - netapp.ontap
+  tasks:
+  - name: getting the Intercluster LIF IP for {{ src_cluster }}
+    na_ontap_command:
+      hostname: "{{ src_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['network interface show -service-policy default-intercluster  -fields address']
+      return_dict: true
+    register: src_interclusterlif
+  - name: return src_interclusterlif
+    debug:
+       msg : "{{ src_interclusterlif.msg.stdout_lines[2].split()[4] }}"
+  - name: getting the Intercluster LIF IP for {{ dst_cluster }}
+    na_ontap_command:
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['network interface show -service-policy default-intercluster  -fields address']
+      return_dict: true
+    register: dst_interclusterlif
+  - name: return dst_interclusterlif
+    debug:
+       msg : "{{ dst_interclusterlif.msg.stdout_lines[2].split()[4] }}"
+  - name: Create cluster peer
+    na_ontap_cluster_peer:
+      state: present
+      source_intercluster_lifs: "{{ src_interclusterlif.msg.stdout_lines[2].split()[4] }}"
+      dest_intercluster_lifs: "{{ dst_interclusterlif.msg.stdout_lines[2].split()[4] }}"
+      passphrase: "peeringpassphrase"
+      hostname: "{{ src_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      dest_hostname: "{{ dst_cluster }}"
+      https: true
+      validate_certs: false
+

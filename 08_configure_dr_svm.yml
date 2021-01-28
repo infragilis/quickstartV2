@@ -1,0 +1,37 @@
+- hosts: localhost
+  name: ONTAP
+  gather_facts: false
+  collections:
+   - netapp.ontap
+  tasks:
+  - name: "Configure DNS for Domain {{ domainname }}"
+    na_ontap_dns:
+      state: present
+      vserver:  "{{ dst_svm }}"
+      domains: "{{ domainname }}"
+      nameservers: "{{ nameserver}}"
+      skip_validation: true
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+  - name: "Create {{ dst_lifrole }} lif svm_{{ dst_svm }}_data_LIF"
+    na_ontap_interface:
+      state: present
+      vserver: "{{ dst_svm }}"
+      interface_name: "svm_{{ dst_svm }}_data_LIF"
+      home_port: "{{ dst_lifhomeport }}"
+      home_node: "{{ dst_lifhomenode }}"
+      role: "{{ dst_lifrole }}"
+      protocols: "{{ dst_lifprotocol }}"
+      admin_status: up
+      is_auto_revert: true
+      address: "{{ dst_lifaddress }}"
+      netmask: "{{ dst_lifnetmask }}"
+      dns_domain_name: "{{ domainname }}"
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false

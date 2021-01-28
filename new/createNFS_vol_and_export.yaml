@@ -1,0 +1,63 @@
+#-----------------------------------------------------------------------------
+#Name        : createNFSvol_and_export.yaml
+#Email       : boonstra@netapp.com
+#Created     : 2021
+#Description : This playbook creates a new volume, with a new export policy for NFS
+#Dependencies: netapp-lib,netapp collections
+#Link        : n/a
+#Disclaimer  : THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
+#            : IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#            : WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+#            : PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+#            : ANYDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#            : DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+#            : GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#            : INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+#            : WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#            : NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#            : THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#-----------------------------------------------------------------------------
+- hosts: localhost
+  name: ONTAP
+  gather_facts: false
+  collections:
+    - netapp.ontap
+  vars_files:
+   vars.yaml
+  vars:
+    login: &login
+      hostname: "{{ src_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false  
+  tasks:
+  - name: Create Policy
+    na_ontap_export_policy:
+      state: present
+      name: "{{ policy }}"
+      vserver: "{{ src_svm }}"
+      <<: *login
+  - name: Setup rules
+    na_ontap_export_policy_rule:
+      state: present
+      policy_name: "{{ policy }}"
+      vserver: "{{ src_svm }}"
+      client_match: 192.168.0.0/24
+      ro_rule: sys
+      rw_rule: sys
+      super_user_security: sys
+      <<: *login
+  - name: Create volume
+    na_ontap_volume:
+      state: present
+      name: "{{ volname }}"
+      aggregate_name: "{{ aggrname }}"
+      size: "{{ volsize }}"
+      size_unit: gb
+      policy: "{{ policy }}"
+      junction_path: "/{{ volname }}"
+      space_guarantee: "none"
+      volume_security_style: "unix"
+      vserver: "{{ src_svm }}"
+      <<: *login

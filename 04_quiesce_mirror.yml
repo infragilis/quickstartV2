@@ -1,0 +1,31 @@
+- hosts: localhost
+  name: ONTAP
+  gather_facts: false
+  collections:
+   - netapp.ontap
+  tasks:  
+  - name: Quiesce svm-dr mirror for {{ dst_cluster }} / {{ dst_svm }} 
+    na_ontap_command:
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['snapmirror quiesce -destination-path {{ dst_svm }}:']
+  - name: wait for svm-dr  {{ dst_cluster }} / {{ dst_svm }} to change to Quiesced
+    na_ontap_command:
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['snapmirror show -destination-path {{ dst_svm }}: -fields status']
+      return_dict: true
+    register: svmbreakstatus
+    until: svmbreakstatus.msg.stdout.find("Quiesced") != -1
+    retries: 12
+    delay: 30
+  - name: return svm-dr status
+    debug:
+       msg : "{{ svmbreakstatus.msg.stdout_lines[2].split()[2] }}"
+

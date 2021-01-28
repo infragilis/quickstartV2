@@ -1,0 +1,35 @@
+- hosts: localhost
+  name: ONTAP
+  gather_facts: false
+  collections:
+   - netapp.ontap
+  tasks:
+  - name: stopping svm {{ src_svm }} on {{ src_cluster }}
+    na_ontap_command:
+      hostname: "{{ src_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['vserver stop {{ src_svm }}']
+  - name: waiting for svm status stopped for{{ src_cluster }} / {{ src_svm }}
+    na_ontap_command:
+      hostname: "{{ src_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['vserver show prod -fields operational-state']
+      return_dict: true
+    register: src_svmstatus
+    until: src_svmstatus.msg.stdout.find("stopped") != -1
+    retries: 12
+    delay: 30
+
+  - name: return svm status
+    debug:
+       msg : "{{ src_svmstatus.msg.stdout_lines[2].split()[1] }}"
+
+
+
+

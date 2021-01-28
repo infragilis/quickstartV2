@@ -1,0 +1,33 @@
+- hosts: localhost
+  name: ONTAP
+  gather_facts: false
+  collections:
+   - netapp.ontap
+  tasks:
+  - name: starting svm {{ dst_svm }} on {{ dst_cluster }}
+    na_ontap_command:
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['vserver start {{ dst_svm }}']
+  - name: waiting for svm status running for{{ dst_cluster }} / {{ dst_svm }}
+    na_ontap_command:
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      command: ['vserver show {{ dst_svm }} -fields operational-state']
+      return_dict: true
+    register: dst_svmstatus
+    until: dst_svmstatus.msg.stdout.find("running") != -1
+    retries: 12
+    delay: 30
+
+  - name: return svm status
+    debug:
+       msg : "{{ dst_svmstatus.msg.stdout_lines[2].split()[1] }}"
+
+
