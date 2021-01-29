@@ -8,18 +8,19 @@ src_cluster_name: sim
 dst_cluster: 192.168.0.82
 netapp_username: admin
 netapp_password: netapp123
-src_svm: ansible_src
+src_svm: ansible_cifs
 domainname: lab.local
-nameserver: 192.168.1.1
+nameserver: 192.168.0.91,192.168.0.1
 src_lifrole: data
 src_lifhomeport: e0c
 src_lifhomenode: sim-01
 src_lifprotocol: cifs,nfs
 src_lifaddress: 192.168.0.111
+src_lifaddress_cifs: 192.168.0.113
 src_lifnetmask: 255.255.255.0
 # AD create creds to add SVM to domain
-ad_username: admin
-ad_password: netapp123
+ad_username: ADadmin
+ad_password: netapp123!
 # vol add
 aggrname: aggr1
 volname: ansible_vol
