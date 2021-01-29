@@ -1,24 +1,32 @@
 #generic stuff
+domain: lab.local
+dns: 192.168.0.1
+ntp: pool.ntp.org
 src_cluster: 192.168.0.81
+#src_cluster_name required for NTP and SVMDR
+src_cluster_name: sim
 dst_cluster: 192.168.0.82
 netapp_username: admin
 netapp_password: netapp123
-src_svm: ansible_src
+src_svm: ansible_cifs
 domainname: lab.local
-nameserver: 192.168.1.1
+nameserver: 192.168.0.91,192.168.0.1
 src_lifrole: data
 src_lifhomeport: e0c
 src_lifhomenode: sim-01
 src_lifprotocol: cifs,nfs
 src_lifaddress: 192.168.0.111
+src_lifaddress_cifs: 192.168.0.113
 src_lifnetmask: 255.255.255.0
 # AD create creds to add SVM to domain
-ad_username: admin
-ad_password: netapp123
+ad_username: ADadmin
+ad_password: netapp123!
 # vol add
 aggrname: aggr1
 volname: ansible_vol
 volsize: 4
+# NFS add vol
+policy: less_hosts
 # SVM DR bits
 dst_svm: ansible_dst
 dst_lifrole: data
@@ -27,6 +35,7 @@ dst_lifhomenode: sim_dr-01
 dst_lifprotocol: cifs,nfs
 dst_lifaddress: 192.168.0.112
 dst_lifnetmask: 255.255.255.0
-identity_preserve:
+DRpolicy: DPDefault
+identity_preserve: yes
 # SSL bits
 ontap_cert_root_common_name: netapp_self
