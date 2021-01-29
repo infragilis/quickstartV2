@@ -61,5 +61,5 @@ curl -H "Content-Type: application/json" -X POST -s -u admin:netapp -d '{ "extra
 
 
 # Support
-Please enter an issue https://github.com/infragilis/ansible-ontap-quickstart/issues if you would like to report a defect
+Please enter an issue https://github.com/infragilis/ansible-netapp-quickstartv2/issues if you would like to report a defect
 
