@@ -8,7 +8,7 @@ domainname: lab.local
 nameserver: 192.168.1.1
 src_lifrole: data
 src_lifhomeport: e0c
-src_lifhomenode: kubOntap97-01
+src_lifhomenode: sim-01
 src_lifprotocol: cifs,nfs
 src_lifaddress: 192.168.0.111
 src_lifnetmask: 255.255.255.0
@@ -16,14 +16,14 @@ src_lifnetmask: 255.255.255.0
 ad_username: admin
 ad_password: netapp123
 # vol add
-aggrname: kubOntap97_01_FC_1
+aggrname: aggr1
 volname: ansible_vol
 volsize: 4
 # SVM DR bits
 dst_svm: ansible_dst
 dst_lifrole: data
 dst_lifhomeport: e0c
-dst_lifhomenode: node1
+dst_lifhomenode: sim_dr-01
 dst_lifprotocol: cifs,nfs
 dst_lifaddress: 192.168.0.112
 dst_lifnetmask: 255.255.255.0
