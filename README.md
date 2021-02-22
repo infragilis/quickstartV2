@@ -27,6 +27,7 @@ ansible-galaxy collection install netapp.ontap
 Create a user and set the password for the ansible account:
 Cluster::>security login create -user-or-group-name ansible -application ontapi -authentication-method password -role admin
 Cluster::>security login create -user-or-group-name ansible -application console -authentication-method password -role admin
+Cluster::>security login create -user-or-group-name ansible -application http -authentication-method password -role admin
 
 choose your password.
 

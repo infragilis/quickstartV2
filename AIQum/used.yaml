@@ -1,0 +1,45 @@
+---
+- hosts: localhost
+  collections:
+    - netapp.ontap
+    - netapp.um_info
+  gather_facts: false
+  vars_files:
+   vars.yml
+  vars:
+    login: &login
+      hostname: "{{ netapp_hostname }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+  tasks:
+    - netapp.um_info.na_um_list_clusters:
+        hostname: "{{ aiq_hostname }}"
+        username: "{{ aiq_username }}"
+        password: "{{ aiq_password }}"
+        validate_certs: false
+      register: cluster_list
+    - set_fact:
+        cluster_id: "{{ item['uuid'] }}"
+      with_items:
+        "{{ cluster_list.msg }}"
+      when: item['name'] == cluster 
+    - netapp.um_info.na_um_list_aggregates:
+        hostname: "{{ aiq_hostname }}"
+        username: "{{ aiq_username }}"
+        password: "{{ aiq_password }}"
+        validate_certs: false
+      register: aggr_list
+    - set_fact:
+        aggr_name: "{{ item.name }}"
+      with_items:
+        "{{ aggr_list.msg }}"
+      when:
+        - item.cluster.uuid == cluster_id
+        - "{{ item.space.block_storage.available | int / 1024 / 1024 / 1024 }} > {{ size }}"
+        - aggr_name is not defined
+    - debug:
+        msg: "No aggregate matches"
+      when: aggr_names is not defined
+

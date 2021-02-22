@@ -1,0 +1,25 @@
+---
+- hosts: localhost
+  collections:
+    - netapp.ontap
+    - netapp.um_info
+  gather_facts: false
+  vars_files:
+   vars.yml
+  vars:
+    login: &login
+      hostname: "{{ netapp_hostname }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+  tasks:
+  - name: Get facts
+    na_um_list_aggregates:
+      hostname: "{{ aiq_hostname }}"
+      username: "{{ aiq_username }}"
+      password: "{{ aiq_password }}"
+      validate_certs: false
+    register: cluster_list
+  - debug:
+      var: cluster_list
