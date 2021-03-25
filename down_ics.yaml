@@ -1,8 +1,8 @@
 #-----------------------------------------------------------------------------
-#Name        : createSVM.yaml
+#Name        : down_icl.yaml
 #Email       : boonstra@netapp.com
 #Created     : 2021
-#Description : This playbook creates an SVM with NFS export for 0.0.0.0/24, CIFS is added but commented out
+#Description : This playbook admin downs all ic interfaces
 #Dependencies: netapp-lib,netapp collections
 #Link        : n/a
 #Disclaimer  : THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
@@ -32,10 +32,30 @@
       https: true
       validate_certs: false  
   tasks:
-  - name: create certificate
-    na_ontap_security_certificates:
-      common_name: "{{ ontap_cert_root_common_name }}"
-      type: root_ca
-      svm: "{{ src_svm }}"
-      expiry_time: P3650DT     # 10 year        
-      <<: *login
+  - name: collect interface info
+    na_ontap_info:
+      state: info
+      gather_subset: net_interface_info
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+    register: ontap_info
+  - debug:
+      msg: "{{ item }} {{ ontap_info.ontap_info.net_interface_info[item].vserver }}"
+    with_items: "{{ ontap_info.ontap_info.net_interface_info }}"  
+  - name: "down all ICLs"
+    na_ontap_interface:
+      state: present
+      vserver: "{{ ontap_info.ontap_info.net_interface_info[item].vserver }}"
+      interface_name: "{{ item }}"
+      role: intercluster
+      admin_status: up
+      home_port: "{{ ontap_info.ontap_info.net_interface_info[item].home_port }}"
+      hostname: "{{ dst_cluster }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      # ontap_info.ontap_info double unless reg diff
+    with_items: "{{ ontap_info.ontap_info.net_interface_info }}"
+    when: item is search("ic")
